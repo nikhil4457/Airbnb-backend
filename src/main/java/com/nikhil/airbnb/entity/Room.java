@@ -1,6 +1,5 @@
 package com.nikhil.airbnb.entity;
 
-
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +17,7 @@ public class Room {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hotel_id", nullable = false)
     private Hotel hotel;
 
@@ -28,19 +27,18 @@ public class Room {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal basePrice;
 
-
     @ElementCollection
     @CollectionTable(
-            name = "hotel_images",
-            joinColumns = @JoinColumn(name = "hotel_id")
+            name = "room_images",
+            joinColumns = @JoinColumn(name = "room_id")
     )
     @Column(name = "image_url", nullable = false)
     private Set<String> imageUrls = new HashSet<>();
 
     @ElementCollection
     @CollectionTable(
-            name = "hotel_amenities",
-            joinColumns = @JoinColumn(name = "hotel_id")
+            name = "room_amenities",
+            joinColumns = @JoinColumn(name = "room_id")
     )
     @Column(name = "amenity")
     private Set<String> amenities = new HashSet<>();
@@ -51,13 +49,10 @@ public class Room {
     @Column(nullable = false)
     private Integer capacity;
 
-
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
-
 }

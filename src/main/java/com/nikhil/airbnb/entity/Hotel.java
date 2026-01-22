@@ -8,7 +8,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity @Getter @Setter
@@ -32,7 +34,7 @@ public class Hotel {
             joinColumns = @JoinColumn(name = "hotel_id")
     )
     @Column(name = "image_url", nullable = false)
-    private Set<String> imageUrls = new HashSet<>();
+    private Set<String> photos = new HashSet<>();
 
     @ElementCollection
     @CollectionTable(
@@ -47,6 +49,12 @@ public class Hotel {
 
     @Column(nullable = false)
     private Boolean active;
+
+    @ManyToOne
+    private User owner;
+
+    @OneToMany(mappedBy = "hotel")
+    private List<Room> rooms = new ArrayList<>();
 
 
     @CreationTimestamp
