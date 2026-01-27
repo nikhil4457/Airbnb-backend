@@ -6,9 +6,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.HashSet;
-import java.util.Set;
-
 @Entity @Getter @Setter
 public class Guest {
     @Id
@@ -26,8 +23,5 @@ public class Guest {
     private Gender gender;
 
     private Integer age;
-
-    @ManyToMany(mappedBy = "guests")
-    private Set<Booking> bookings = new HashSet<>();
 
 }

@@ -64,9 +64,4 @@ public class Hotel {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-
-
-
-
-
 }

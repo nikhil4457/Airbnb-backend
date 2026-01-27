@@ -1,6 +1,5 @@
 package com.nikhil.airbnb.service;
 
-import com.nikhil.airbnb.dto.HotelDto;
 import com.nikhil.airbnb.dto.RoomDto;
 import com.nikhil.airbnb.entity.Hotel;
 import com.nikhil.airbnb.entity.Room;
@@ -8,21 +7,25 @@ import com.nikhil.airbnb.exception.ResourceNotFoundException;
 import com.nikhil.airbnb.repository.HotelRepository;
 import com.nikhil.airbnb.repository.RoomRepository;
 import jakarta.transaction.Transactional;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
 public class RoomServiceImpl implements RoomService{
 
-    private final RoomRepository roomRepository;
-    private final ModelMapper modelMapper;
-    private final HotelRepository hotelRepository;
-    private final InventoryService inventoryService;
+    RoomRepository roomRepository;
+    ModelMapper modelMapper;
+    HotelRepository hotelRepository;
+    InventoryService inventoryService;
 
     @Override
     @Transactional
@@ -57,7 +60,7 @@ public class RoomServiceImpl implements RoomService{
     @Transactional
     public void deleteRoomById(Long roomId) {
         Room room = roomRepository.findById(roomId).orElseThrow(() -> new ResourceNotFoundException("Room not found with id:  " + roomId));
-        inventoryService.deleteFutureInventories(room);
+        inventoryService.deleteByRoom(room);
         roomRepository.delete(room);
      }
 }
