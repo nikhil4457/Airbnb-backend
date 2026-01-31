@@ -3,7 +3,7 @@ package com.nikhil.airbnb.controller;
 import com.nikhil.airbnb.dto.BookingDto;
 import com.nikhil.airbnb.dto.BookingRequest;
 import com.nikhil.airbnb.dto.GuestDto;
-import com.nikhil.airbnb.service.BookingService;
+import com.nikhil.airbnb.service.serviceInterfaces.BookingService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -19,17 +19,20 @@ import java.util.List;
 @Slf4j
 @RequestMapping("/bookings")
 public class HotelBookingController {
-
+    // =====================================================================================================================
     BookingService bookingService;
+    // =====================================================================================================================
 
     @PostMapping("/init")
     public ResponseEntity<BookingDto> initialiseBooking(@RequestBody BookingRequest bookingRequest){
         return ResponseEntity.ok(bookingService.initialiseBooking(bookingRequest));
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @PostMapping("/{bookingId}/addGuests")
     public ResponseEntity<BookingDto> addGuests(@PathVariable Long bookingId, @RequestBody List<GuestDto> guestDtos){
         return ResponseEntity.ok(bookingService.addGuests(bookingId, guestDtos));
     }
+
+    // =====================================================================================================================
 
 }

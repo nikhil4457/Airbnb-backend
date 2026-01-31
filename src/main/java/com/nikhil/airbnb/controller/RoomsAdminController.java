@@ -1,7 +1,7 @@
 package com.nikhil.airbnb.controller;
 
 import com.nikhil.airbnb.dto.RoomDto;
-import com.nikhil.airbnb.service.RoomService;
+import com.nikhil.airbnb.service.serviceInterfaces.RoomService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,7 +15,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class RoomsAdminController {
+    // =====================================================================================================================
     private final RoomService roomService;
+    // =====================================================================================================================
 
     @PostMapping
     public ResponseEntity<RoomDto> createNewRoom(@PathVariable Long hotelId,
@@ -24,24 +26,22 @@ public class RoomsAdminController {
         RoomDto room = roomService.createNewRoom(hotelId, roomDto);
         return new ResponseEntity<>(room, HttpStatus.CREATED);
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-]
     @GetMapping
     public ResponseEntity<List<RoomDto>> getAllRoomsInHotel(@PathVariable Long hotelId){
         return ResponseEntity.ok(roomService.getAllRoomsInHotel(hotelId));
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @GetMapping("/{roomId}")
     public ResponseEntity<RoomDto> getRoomById(@PathVariable Long roomId){
         return ResponseEntity.ok(roomService.getRoomById(roomId));
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @DeleteMapping("/{roomId}")
     public ResponseEntity<RoomDto> deleteRoomById(@PathVariable Long roomId){
         roomService.deleteRoomById(roomId);
         return ResponseEntity.noContent().build();
     }
 
-
-
-
+    // =====================================================================================================================
 }

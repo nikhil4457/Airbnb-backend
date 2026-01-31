@@ -1,4 +1,4 @@
-package com.nikhil.airbnb.service;
+package com.nikhil.airbnb.service.serviceInterfaces;
 
 import com.nikhil.airbnb.dto.BookingDto;
 import com.nikhil.airbnb.dto.BookingRequest;

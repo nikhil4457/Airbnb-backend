@@ -1,4 +1,4 @@
-package com.nikhil.airbnb.service;
+package com.nikhil.airbnb.service.serviceImplementations;
 
 import com.nikhil.airbnb.dto.RoomDto;
 import com.nikhil.airbnb.entity.Hotel;
@@ -6,6 +6,8 @@ import com.nikhil.airbnb.entity.Room;
 import com.nikhil.airbnb.exception.ResourceNotFoundException;
 import com.nikhil.airbnb.repository.HotelRepository;
 import com.nikhil.airbnb.repository.RoomRepository;
+import com.nikhil.airbnb.service.serviceInterfaces.InventoryService;
+import com.nikhil.airbnb.service.serviceInterfaces.RoomService;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +22,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-public class RoomServiceImpl implements RoomService{
-
+public class RoomServiceImpl implements RoomService {
+    // =====================================================================================================================
     RoomRepository roomRepository;
-    ModelMapper modelMapper;
     HotelRepository hotelRepository;
     InventoryService inventoryService;
+    ModelMapper modelMapper;
+    // =====================================================================================================================
 
     @Override
     @Transactional
@@ -40,7 +43,7 @@ public class RoomServiceImpl implements RoomService{
 
         return modelMapper.map(room, RoomDto.class);
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
     public List<RoomDto> getAllRoomsInHotel(Long hotelId) {
         Hotel hotel = hotelRepository.findById(hotelId).orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id : " + hotelId));
@@ -49,18 +52,21 @@ public class RoomServiceImpl implements RoomService{
                 .map(room -> modelMapper.map(room, RoomDto.class))
                 .toList();
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
     public RoomDto getRoomById(Long roomId) {
         Room room = roomRepository.findById(roomId).orElseThrow(() -> new ResourceNotFoundException("Room not found with id:  " + roomId));
         return modelMapper.map(room, RoomDto.class);
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
     @Transactional
     public void deleteRoomById(Long roomId) {
         Room room = roomRepository.findById(roomId).orElseThrow(() -> new ResourceNotFoundException("Room not found with id:  " + roomId));
         inventoryService.deleteByRoom(room);
         roomRepository.delete(room);
-     }
+    }
+
+    // =====================================================================================================================
+
 }

@@ -1,8 +1,6 @@
-package com.nikhil.airbnb.service;
+package com.nikhil.airbnb.service.serviceInterfaces;
 
-import com.nikhil.airbnb.dto.HotelDto;
 import com.nikhil.airbnb.dto.RoomDto;
-import com.nikhil.airbnb.entity.Room;
 
 import java.util.List;
 

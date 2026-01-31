@@ -1,4 +1,4 @@
-package com.nikhil.airbnb.service;
+package com.nikhil.airbnb.service.serviceImplementations;
 
 import com.nikhil.airbnb.dto.HotelDto;
 import com.nikhil.airbnb.dto.HotelInfoDto;
@@ -8,6 +8,8 @@ import com.nikhil.airbnb.entity.Room;
 import com.nikhil.airbnb.exception.ResourceNotFoundException;
 import com.nikhil.airbnb.repository.HotelRepository;
 import com.nikhil.airbnb.repository.RoomRepository;
+import com.nikhil.airbnb.service.serviceInterfaces.HotelService;
+import com.nikhil.airbnb.service.serviceInterfaces.InventoryService;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,14 +24,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-public class HotelServiceImpl implements HotelService{
-
-    // ========================================================================================================================================================
+public class HotelServiceImpl implements HotelService {
+    // =====================================================================================================================
     HotelRepository hotelRepository;
-    ModelMapper modelMapper;
     InventoryService inventoryService;
     RoomRepository roomRepository;
-    // ========================================================================================================================================================
+    ModelMapper modelMapper;
+    // =====================================================================================================================
 
     @Override
     public HotelDto createNewHotel(HotelDto hotelDto) {
@@ -95,5 +96,5 @@ public class HotelServiceImpl implements HotelService{
         return new HotelInfoDto(modelMapper.map(hotel, HotelDto.class), roomDtos);
     }
 
-    // ========================================================================================================================================================
+    // =====================================================================================================================
 }

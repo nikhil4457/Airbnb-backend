@@ -1,4 +1,4 @@
-package com.nikhil.airbnb.service;
+package com.nikhil.airbnb.service.serviceImplementations;
 
 
 import com.nikhil.airbnb.dto.BookingDto;
@@ -9,6 +9,7 @@ import com.nikhil.airbnb.entity.enums.BookingStatus;
 import com.nikhil.airbnb.entity.enums.Role;
 import com.nikhil.airbnb.exception.ResourceNotFoundException;
 import com.nikhil.airbnb.repository.*;
+import com.nikhil.airbnb.service.serviceInterfaces.BookingService;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +29,14 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class BookingServiceImpl implements BookingService {
+    // =====================================================================================================================
     BookingRepository bookingRepository;
     HotelRepository hotelRepository;
     RoomRepository roomRepository;
     InventoryRepository inventoryRepository;
-    ModelMapper modelMapper;
     UserRepository userRepository;
-
+    ModelMapper modelMapper;
+    // =====================================================================================================================
 
     @Override
     @Transactional
@@ -78,7 +80,7 @@ public class BookingServiceImpl implements BookingService {
         booking = bookingRepository.save(booking);
         return modelMapper.map(booking, BookingDto.class);
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
     public BookingDto addGuests(Long bookingId, List<GuestDto> guestDtos) {
         log.info("Adding guests to booking: {}", bookingId);
@@ -97,10 +99,12 @@ public class BookingServiceImpl implements BookingService {
         booking = bookingRepository.save(booking);
         return modelMapper.map(booking, BookingDto.class);
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     public boolean hasBookingExpired(Booking booking) {
         return booking.getCreatedAt().plusMinutes(30).isBefore(LocalDateTime.now());
     }
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     private User getCurrentUser() {
         return userRepository.findByEmail("dummy@test.com")
                 .orElseGet(() -> {
@@ -112,5 +116,7 @@ public class BookingServiceImpl implements BookingService {
                     return userRepository.save(dummyUser);
                 });
     }
+
+    // =====================================================================================================================
 
 }
