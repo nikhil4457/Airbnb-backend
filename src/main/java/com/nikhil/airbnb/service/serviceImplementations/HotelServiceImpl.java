@@ -3,9 +3,11 @@ package com.nikhil.airbnb.service.serviceImplementations;
 import com.nikhil.airbnb.dto.HotelDto;
 import com.nikhil.airbnb.dto.HotelInfoDto;
 import com.nikhil.airbnb.dto.RoomDto;
+import com.nikhil.airbnb.entity.AppUser;
 import com.nikhil.airbnb.entity.Hotel;
 import com.nikhil.airbnb.entity.Room;
 import com.nikhil.airbnb.exception.ResourceNotFoundException;
+import com.nikhil.airbnb.exception.UnAuthorizedException;
 import com.nikhil.airbnb.repository.HotelRepository;
 import com.nikhil.airbnb.repository.RoomRepository;
 import com.nikhil.airbnb.service.serviceInterfaces.HotelService;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -36,6 +39,8 @@ public class HotelServiceImpl implements HotelService {
     public HotelDto createNewHotel(HotelDto hotelDto) {
         Hotel hotel = modelMapper.map(hotelDto, Hotel.class);
         hotel.setActive(false);
+        AppUser appUser = (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        hotel.setOwner(appUser);
         hotel.setId(null);
         hotel = hotelRepository.save(hotel);
         return modelMapper.map(hotel, HotelDto.class);
@@ -44,7 +49,11 @@ public class HotelServiceImpl implements HotelService {
     @Override
     @Transactional
     public HotelDto getHotelById(Long id) {
-        Hotel hotel = hotelRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Hotel not found"));
+        Hotel hotel = hotelRepository.findById(id)
+                .orElseThrow(()-> new ResourceNotFoundException("Hotel not found"));
+        AppUser appUser = (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if(!appUser.equals(hotel.getOwner()))
+            throw new UnAuthorizedException("Hotel does not belong to user with id: " + appUser.getId());
         return modelMapper.map(hotel, HotelDto.class);
     }
     //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
@@ -57,6 +66,9 @@ public class HotelServiceImpl implements HotelService {
     public HotelDto updateHotelById(Long id, HotelDto hotelDto) {
         Hotel hotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with this id"));
+        AppUser appUser = (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if(!appUser.equals(hotel.getOwner()))
+            throw new UnAuthorizedException("Hotel does not belong to user with id: " + appUser.getId());
         modelMapper.map(hotelDto, hotel);
         hotel.setId(id);
         return modelMapper.map(hotelRepository.save(hotel), HotelDto.class);
@@ -67,6 +79,9 @@ public class HotelServiceImpl implements HotelService {
     public void deleteHotelById(Long id) {
         Hotel hotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with this id"));
+        AppUser appUser = (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if(!appUser.equals(hotel.getOwner()))
+            throw new UnAuthorizedException("Hotel does not belong to user with id: " + appUser.getId());
         for(Room room: hotel.getRooms()){
             inventoryService.deleteByRoom(room);
             roomRepository.delete(room);
@@ -78,6 +93,9 @@ public class HotelServiceImpl implements HotelService {
     @Transactional
     public void activateHotel(Long id) {
         Hotel hotel = hotelRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Hotel not found with this id: " + id));
+        AppUser appUser = (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if(!appUser.equals(hotel.getOwner()))
+            throw new UnAuthorizedException("Hotel does not belong to user with id: " + appUser.getId());
         hotel.setActive(true);
          // assuming you only do it once:
         for(Room room: hotel.getRooms()){

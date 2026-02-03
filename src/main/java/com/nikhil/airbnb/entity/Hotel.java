@@ -50,8 +50,8 @@ public class Hotel {
     @Column(nullable = false)
     private Boolean active;
 
-    @ManyToOne
-    private User owner;
+    @ManyToOne(optional = false)
+    private AppUser owner;
 
     @OneToMany(mappedBy = "hotel")
     private List<Room> rooms = new ArrayList<>();

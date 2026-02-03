@@ -13,7 +13,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +37,7 @@ public class PricingUpdateService {
     PricingService pricingService;
     // =====================================================================================================================
 
-    @Scheduled(cron = "*/5 * * * * *") // Every 5 minutes for demonstration; change to "0 0 * * * *" for hourly in production)
+//    @Scheduled(cron = "*/5 * * * * *") // Every 5 minutes for demonstration; change to "0 0 * * * *" for hourly in production)
     public void updatePrice(){
         int page = 0;
         int batchSize = 100;
