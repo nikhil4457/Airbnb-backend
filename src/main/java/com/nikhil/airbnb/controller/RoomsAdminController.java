@@ -2,7 +2,9 @@ package com.nikhil.airbnb.controller;
 
 import com.nikhil.airbnb.dto.RoomDto;
 import com.nikhil.airbnb.service.serviceInterfaces.RoomService;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,12 +13,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/hotels/{hotelId}/rooms")
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
+@RequestMapping("/api")
 public class RoomsAdminController {
     // =====================================================================================================================
-    private final RoomService roomService;
+    RoomService roomService;
     // =====================================================================================================================
 
     @PostMapping

@@ -23,14 +23,15 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequestMapping("/auth")
 public class AuthController {
-
+    // =====================================================================================================================
     AuthService authService;
+    // =====================================================================================================================
 
     @PostMapping("/signup")
     public ResponseEntity<UserDto> signup(@RequestBody SignupRequestDto signupRequestDto) {
         return new ResponseEntity<>(authService.signup(signupRequestDto), HttpStatus.CREATED);
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@RequestBody LoginDto loginDto, HttpServletResponse response) {
         String[] tokens = authService.login(loginDto);
@@ -40,7 +41,7 @@ public class AuthController {
         response.addCookie(cookie);
         return ResponseEntity.ok().body(new LoginResponseDto(tokens[0])  );
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @PostMapping("/refresh")
     public ResponseEntity<LoginResponseDto> refresh(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
         if(refreshToken == null)
@@ -49,6 +50,5 @@ public class AuthController {
         return ResponseEntity.ok().body(new LoginResponseDto(accessToken));
     }
 
-
-
+    // =====================================================================================================================
 }

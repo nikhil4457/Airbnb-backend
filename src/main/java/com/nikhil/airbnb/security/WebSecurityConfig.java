@@ -23,8 +23,10 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class WebSecurityConfig {
+    // =====================================================================================================================
      JWTAuthFilter jwtAuthFilter;
      HandlerExceptionResolver handlerExceptionResolver;
+     // =====================================================================================================================
 
      @Bean
      public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -43,22 +45,24 @@ public class WebSecurityConfig {
 
          return http.build();
      }
-
-
+     //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
          return (request, response, accessDeniedException) -> {
              handlerExceptionResolver.resolveException(request, response, null, accessDeniedException);
          };
     }
+
+    // =====================================================================================================================
+
 }

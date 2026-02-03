@@ -21,14 +21,15 @@ import java.util.Date;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
 public class JWTService {
-
+    // =====================================================================================================================
     @Value("${jwt.secretKey}")
     private String secretKey;
+    // =====================================================================================================================
 
     private SecretKey getSecretKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     public String generateAccessToken(AppUser user) {
         return Jwts.builder()
                 .subject(user.getId().toString())
@@ -39,7 +40,7 @@ public class JWTService {
                 .signWith(getSecretKey())
                 .compact();
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     public String generateRefreshToken(AppUser user) {
         return Jwts.builder()
                 .subject(user.getId().toString())
@@ -48,7 +49,7 @@ public class JWTService {
                 .signWith(getSecretKey())
                 .compact();
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     public Long getUserIdFromToken(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(getSecretKey())
@@ -58,4 +59,5 @@ public class JWTService {
         return Long.parseLong(claims.getSubject());
     }
 
+    // =====================================================================================================================
 }

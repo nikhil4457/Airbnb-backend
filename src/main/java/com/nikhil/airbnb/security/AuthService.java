@@ -25,13 +25,14 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class AuthService {
-
+    // =====================================================================================================================
     AppUserRepository appUserRepository;
     PasswordEncoder passwordEncoder;
     AuthenticationManager authenticationManager;
     AppUserService appUserService;
     JWTService jwtService;
     ModelMapper modelMapper;
+    // =====================================================================================================================
 
     public UserDto signup(SignupRequestDto signupRequestDto) {
         if(appUserRepository.existsByEmail(signupRequestDto.getEmail())) {
@@ -43,7 +44,7 @@ public class AuthService {
         AppUser savedUser = appUserRepository.save(appUser);
         return modelMapper.map(savedUser, UserDto.class);
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     public String[] login(LoginDto loginDto){
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword())
@@ -51,10 +52,12 @@ public class AuthService {
         AppUser appUser = (AppUser) authentication.getPrincipal();
         return new String[]{jwtService.generateAccessToken(appUser), jwtService.generateRefreshToken(appUser)};
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     public String refreshToken(String refreshToken){
         Long id = jwtService.getUserIdFromToken(refreshToken);
         AppUser appUser = appUserService.getUserById(id);
         return jwtService.generateAccessToken(appUser);
     }
+
+    // =====================================================================================================================
 }

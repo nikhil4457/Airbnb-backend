@@ -18,16 +18,20 @@ import org.springframework.stereotype.Service;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class AppUserServiceImpl implements AppUserService, UserDetailsService {
-
+    // =====================================================================================================================
     AppUserRepository appUserRepository;
+    // =====================================================================================================================
 
     @Override
     public AppUser getUserById(Long userId) {
         return appUserRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("AppUser not found with this id: " + userId));
     }
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return appUserRepository.findByEmail(email).orElse(null);
     }
+
+    // =====================================================================================================================
 }

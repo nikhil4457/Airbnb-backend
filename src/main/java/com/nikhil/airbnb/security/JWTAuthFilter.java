@@ -24,10 +24,11 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class JWTAuthFilter extends OncePerRequestFilter {
-
+    // =====================================================================================================================
     JWTService jwtService;
     AppUserService appUserService;
     HandlerExceptionResolver handlerExceptionResolver;
+    // =====================================================================================================================
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -56,5 +57,7 @@ public class JWTAuthFilter extends OncePerRequestFilter {
         }
 
     }
+
+    // =====================================================================================================================
 }
 
