@@ -4,59 +4,188 @@ import com.nikhil.airbnb.entity.Hotel;
 import com.nikhil.airbnb.entity.Inventory;
 import com.nikhil.airbnb.entity.Room;
 import jakarta.persistence.LockModeType;
-import jakarta.transaction.Transactional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
-    @Transactional
-    void deleteByDateAfterAndRoom(LocalDate date, Room room);
     void deleteByRoom(Room room);
 
-    @Query(
-            """
-            SELECT distinct i.hotel
-            FROM Inventory i
-            WHERE i.city = :city
-                AND i.date BETWEEN :startDate AND :endDate
-                AND i.closed = false
-                AND (i.totalCount - i.bookedCount - i.reservedCount) >= :roomsCount
-            GROUP BY i.hotel, i.room
-            HAVING COUNT(i.date) = :dateCount
-            """
-    )
-    Page<Hotel> findHotelsWithAvailableInventory(
-            @Param("city") String city,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            @Param("roomsCount") Integer roomsCount,
-            @Param("dateCount") Long dateCount,
-            Pageable pageable
-    );
+    // ==================== BOOKING QUERIES (EXCLUDE CHECKOUT DATE) ====================
 
     @Query("""
             SELECT i
             FROM Inventory i
             WHERE i.room.id = :roomId
-                AND i.date BETWEEN :startDate AND :endDate
-                AND i.closed = false
+                AND i.date >= :checkInDate
+                AND i.date < :checkOutDate
                 AND (i.totalCount - i.bookedCount - i.reservedCount) >= :roomsCount
+                AND i.closed = false
             """)
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    List<Inventory> findAndLockAvailableInventories(
+    List<Inventory> findAndLockAvailableInventory(
+            @Param("roomId") Long roomId,
+            @Param("checkInDate") LocalDate checkInDate,
+            @Param("checkOutDate") LocalDate checkOutDate,
+            @Param("roomsCount") Integer roomsCount
+    );
+
+    @Query("""
+                SELECT i
+                FROM Inventory i
+                WHERE i.room.id = :roomId
+                  AND i.date >= :checkInDate
+                  AND i.date < :checkOutDate
+                  AND i.reservedCount >= :numberOfRooms
+                  AND i.closed = false
+            """)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Inventory> findAndLockReservedInventory(
+            @Param("roomId") Long roomId,
+            @Param("checkInDate") LocalDate checkInDate,
+            @Param("checkOutDate") LocalDate checkOutDate,
+            @Param("numberOfRooms") int numberOfRooms
+    );
+
+    @Query("""
+                SELECT i
+                FROM Inventory i
+                WHERE i.room.id = :roomId
+                  AND i.date >= :checkInDate
+                  AND i.date < :checkOutDate
+                  AND i.bookedCount >= :numberOfRooms
+                  AND i.closed = false
+            """)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Inventory> findAndLockBookedInventory(
+            @Param("roomId") Long roomId,
+            @Param("checkInDate") LocalDate checkInDate,
+            @Param("checkOutDate") LocalDate checkOutDate,
+            @Param("numberOfRooms") int numberOfRooms
+    );
+
+    @Modifying
+    @Query("""
+                UPDATE Inventory i
+                SET i.reservedCount = i.reservedCount + :numberOfRooms
+                WHERE i.room.id = :roomId
+                  AND i.date >= :checkInDate
+                  AND i.date < :checkOutDate
+                  AND (i.totalCount - i.bookedCount - i.reservedCount) >= :numberOfRooms
+                  AND i.closed = false
+            """)
+    int initBooking(
+            @Param("roomId") Long roomId,
+            @Param("checkInDate") LocalDate checkInDate,
+            @Param("checkOutDate") LocalDate checkOutDate,
+            @Param("numberOfRooms") int numberOfRooms
+    );
+
+    @Modifying
+    @Query("""
+        UPDATE Inventory i
+        SET i.reservedCount = i.reservedCount - :numberOfRooms,
+            i.bookedCount = i.bookedCount + :numberOfRooms
+        WHERE i.room.id = :roomId
+          AND i.date >= :checkInDate
+          AND i.date < :checkOutDate
+          AND i.reservedCount >= :numberOfRooms
+          AND i.closed = false
+    """)
+    int confirmBooking(
+            @Param("roomId") Long roomId,
+            @Param("checkInDate") LocalDate checkInDate,
+            @Param("checkOutDate") LocalDate checkOutDate,
+            @Param("numberOfRooms") int numberOfRooms
+    );
+
+    @Modifying
+    @Query("""
+                UPDATE Inventory i
+                SET i.bookedCount = i.bookedCount - :numberOfRooms
+                WHERE i.room.id = :roomId
+                  AND i.date >= :checkInDate
+                  AND i.date < :checkOutDate
+                  AND i.bookedCount >= :numberOfRooms
+            """)
+    int cancelBooking(
+            @Param("roomId") Long roomId,
+            @Param("checkInDate") LocalDate checkInDate,
+            @Param("checkOutDate") LocalDate checkOutDate,
+            @Param("numberOfRooms") int numberOfRooms
+    );
+
+    @Modifying
+    @Query("""
+        UPDATE Inventory i
+        SET i.reservedCount = i.reservedCount - :numberOfRooms
+        WHERE i.room.id = :roomId
+          AND i.date >= :checkInDate
+          AND i.date < :checkOutDate
+          AND i.reservedCount >= :numberOfRooms
+    """)
+    int cancelReservation(
+            @Param("roomId") Long roomId,
+            @Param("checkInDate") LocalDate checkInDate,
+            @Param("checkOutDate") LocalDate checkOutDate,
+            @Param("numberOfRooms") Integer numberOfRooms
+    );
+
+    // ==================== INVENTORY MANAGEMENT (INCLUDE BOTH DATES) ====================
+
+    List<Inventory> findByHotelAndDateBetween(Hotel hotel, LocalDate startDate, LocalDate endDate);
+
+    @Query("""
+                SELECT i
+                FROM Inventory i
+                WHERE i.room.id = :roomId
+                  AND i.date >= :startDate
+                  AND i.date <= :endDate
+            """)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Inventory> getInventoryAndLockBeforeUpdate(
+            @Param("roomId") Long roomId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Modifying
+    @Query("""
+                UPDATE Inventory i
+                SET i.surgeFactor = :surgeFactor,
+                    i.closed = :closed
+                WHERE i.room.id = :roomId
+                  AND i.date >= :startDate
+                  AND i.date <= :endDate
+            """)
+    void updateInventory(
             @Param("roomId") Long roomId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
-            @Param("roomsCount") Integer roomsCount
-            );
+            @Param("closed") boolean closed,
+            @Param("surgeFactor") BigDecimal surgeFactor
+    );
 
-    List<Inventory> findByHotelAndDateBetween(Hotel hotel, LocalDate startDate, LocalDate endDate);
+//    // ==================== UTILITY METHODS ====================
+//
+//    boolean existsByDateBetweenAndReservedCountIsGreaterThan(
+//            LocalDate startDate,
+//            LocalDate endDate,
+//            int threshold
+//    );
+//
+//    boolean existsByDateBetweenAndBookedCountIsGreaterThan(
+//            LocalDate startDate,
+//            LocalDate endDate,
+//            int threshold
+//    );
+//
+//    List<Inventory> findByRoomOrderByDate(Room room);
 }

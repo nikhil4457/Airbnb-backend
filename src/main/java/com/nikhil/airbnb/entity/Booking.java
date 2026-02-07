@@ -64,12 +64,16 @@ public class Booking {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
+    @Column(unique = true)
+    private String paymentSessionId;
+
     @ManyToMany
     @JoinTable(
             name = "booking_guests",
             joinColumns = @JoinColumn(name = "booking_id"),
             inverseJoinColumns = @JoinColumn(name = "guest_id")
     )
+    @Builder.Default
     private Set<Guest> guests = new HashSet<>();
 
 

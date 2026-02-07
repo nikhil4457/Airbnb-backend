@@ -18,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-@RequestMapping("/api")
+@RequestMapping("/admin/hotels")
 public class HotelController {
     // =====================================================================================================================
     HotelService hotelService;

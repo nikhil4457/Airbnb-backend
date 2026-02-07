@@ -7,7 +7,7 @@ import com.nikhil.airbnb.entity.AppUser;
 import com.nikhil.airbnb.entity.Hotel;
 import com.nikhil.airbnb.entity.Room;
 import com.nikhil.airbnb.exception.ResourceNotFoundException;
-import com.nikhil.airbnb.exception.UnAuthorizedException;
+import com.nikhil.airbnb.exception.UnauthorizedException;
 import com.nikhil.airbnb.repository.HotelRepository;
 import com.nikhil.airbnb.repository.RoomRepository;
 import com.nikhil.airbnb.service.serviceInterfaces.HotelService;
@@ -53,7 +53,7 @@ public class HotelServiceImpl implements HotelService {
                 .orElseThrow(()-> new ResourceNotFoundException("Hotel not found"));
         AppUser appUser = (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if(!appUser.equals(hotel.getOwner()))
-            throw new UnAuthorizedException("Hotel does not belong to user with id: " + appUser.getId());
+            throw new UnauthorizedException("Hotel does not belong to user with id: " + appUser.getId());
         return modelMapper.map(hotel, HotelDto.class);
     }
     //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
@@ -68,7 +68,7 @@ public class HotelServiceImpl implements HotelService {
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with this id"));
         AppUser appUser = (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if(!appUser.equals(hotel.getOwner()))
-            throw new UnAuthorizedException("Hotel does not belong to user with id: " + appUser.getId());
+            throw new UnauthorizedException("Hotel does not belong to user with id: " + appUser.getId());
         modelMapper.map(hotelDto, hotel);
         hotel.setId(id);
         return modelMapper.map(hotelRepository.save(hotel), HotelDto.class);
@@ -81,7 +81,7 @@ public class HotelServiceImpl implements HotelService {
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with this id"));
         AppUser appUser = (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if(!appUser.equals(hotel.getOwner()))
-            throw new UnAuthorizedException("Hotel does not belong to user with id: " + appUser.getId());
+            throw new UnauthorizedException("Hotel does not belong to user with id: " + appUser.getId());
         for(Room room: hotel.getRooms()){
             inventoryService.deleteByRoom(room);
             roomRepository.delete(room);
@@ -95,7 +95,7 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel = hotelRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Hotel not found with this id: " + id));
         AppUser appUser = (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if(!appUser.equals(hotel.getOwner()))
-            throw new UnAuthorizedException("Hotel does not belong to user with id: " + appUser.getId());
+            throw new UnauthorizedException("Hotel does not belong to user with id: " + appUser.getId());
         hotel.setActive(true);
          // assuming you only do it once:
         for(Room room: hotel.getRooms()){
