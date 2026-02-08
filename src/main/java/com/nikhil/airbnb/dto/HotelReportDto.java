@@ -1,11 +1,10 @@
 package com.nikhil.airbnb.dto;
 
 
-import com.nikhil.airbnb.entity.enums.Gender;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
 
 @Builder
 @Getter
@@ -14,10 +13,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ToString
-public class UserDto {
-    Long id;
-    String name;
-    String email;
-    Gender gender;
-    LocalDate dateOfBirth;
+public class HotelReportDto {
+    Long bookingCount;
+    BigDecimal totalRevenue;
+    BigDecimal avgRevenue;
 }

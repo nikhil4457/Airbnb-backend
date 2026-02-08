@@ -1,43 +1,58 @@
 package com.nikhil.airbnb.entity;
 
 
+import com.nikhil.airbnb.entity.enums.Gender;
 import com.nikhil.airbnb.entity.enums.Role;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Entity @Getter @Setter
+@Entity
+@Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(
-        name = "app_user"
+        name = "app_user",
+        indexes = {} ,
+        uniqueConstraints = {}
 )
 public class AppUser implements UserDetails {
 
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    Long id;
 
     @Column(unique = true, nullable = false)
-    private String email;
+    String email;
 
     @Column(nullable = false)
-    private String password;
+    String password;
 
-    private String name;
+    String name;
+
+    LocalDate dateOfBirth;
+
+    @Enumerated(EnumType.STRING)
+    Gender gender;
 
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    private Set<Role> roles = new HashSet<>();
+    Set<Role> roles = new HashSet<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

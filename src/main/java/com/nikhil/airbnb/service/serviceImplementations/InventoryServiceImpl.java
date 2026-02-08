@@ -2,13 +2,20 @@ package com.nikhil.airbnb.service.serviceImplementations;
 
 import com.nikhil.airbnb.dto.HotelPriceDto;
 import com.nikhil.airbnb.dto.HotelSearchRequest;
+import com.nikhil.airbnb.dto.InventoryDto;
+import com.nikhil.airbnb.dto.UpdateInventoryRequestDto;
+import com.nikhil.airbnb.entity.AppUser;
 import com.nikhil.airbnb.entity.Booking;
 import com.nikhil.airbnb.entity.Inventory;
 import com.nikhil.airbnb.entity.Room;
 import com.nikhil.airbnb.entity.enums.BookingStatus;
+import com.nikhil.airbnb.exception.ResourceNotFoundException;
+import com.nikhil.airbnb.exception.UnauthorizedException;
 import com.nikhil.airbnb.repository.BookingRepository;
 import com.nikhil.airbnb.repository.HotelMinPriceRepository;
 import com.nikhil.airbnb.repository.InventoryRepository;
+import com.nikhil.airbnb.repository.RoomRepository;
+import com.nikhil.airbnb.service.serviceInterfaces.AppUserService;
 import com.nikhil.airbnb.service.serviceInterfaces.BookingService;
 import com.nikhil.airbnb.service.serviceInterfaces.InventoryService;
 import jakarta.transaction.Transactional;
@@ -16,6 +23,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +44,9 @@ public class InventoryServiceImpl implements InventoryService {
     HotelMinPriceRepository hotelMinPriceRepository;
     BookingRepository bookingRepository;
     BookingService bookingService;
+    RoomRepository roomRepository;
+    AppUserService appUserService;
+    ModelMapper modelMapper;
     // =====================================================================================================================
 
     @Override
@@ -80,10 +91,63 @@ public class InventoryServiceImpl implements InventoryService {
                 pageable
         );
     }
-    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+
+    @Override
+    public List<InventoryDto> getAllInventoryByRoom(Long roomId) {
+        log.info("Getting all inventories for room with id: {}", roomId);
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
+        AppUser appUser = appUserService.getCurrentUserFromSecurityContext();
+        if(!appUser.equals(room.getHotel().getOwner()))
+            throw new UnauthorizedException("You are not the owner of room with id : " + roomId);
+        return inventoryRepository.findByRoomOrderByDate(room)
+                .stream()
+                .map(inventory -> modelMapper.map(inventory, InventoryDto.class))
+                .toList();
+    }
+
+    @Override
     @Transactional
-    public void closeInventory(Long roomId, LocalDate startDate, LocalDate endDate, String reason) {
-        List<Booking> affectedBookings = new ArrayList<>();
+    public void updateInventory(Long roomId, UpdateInventoryRequestDto updateInventoryRequestDto) {
+        log.info("Updating all inventories for room with id: {} between date range : {} - {} ",
+                roomId, updateInventoryRequestDto.getStartDate(), updateInventoryRequestDto.getEndDate());
+        Boolean newClosedStatus = updateInventoryRequestDto.getClosed();
+        BigDecimal newSurgeFactor = updateInventoryRequestDto.getSurgeFactor();
+        boolean updateClosedStatus = newClosedStatus != null;
+        boolean updateSurgeFactor = newSurgeFactor != null;
+        if(!updateClosedStatus && !updateSurgeFactor){
+            throw new IllegalArgumentException("SurgeFactor and closed cannot be null simultaneously in a update request");
+        }
+        LocalDate updateStartDate = updateInventoryRequestDto.getStartDate();
+        LocalDate updateEndDate = updateInventoryRequestDto.getEndDate();
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
+        AppUser appUser = appUserService.getCurrentUserFromSecurityContext();
+        if(!appUser.equals(room.getHotel().getOwner()))
+            throw new UnauthorizedException("You are not the owner of room with id : " + roomId);
+        inventoryRepository.lockInventoryBeforeUpdate(roomId,
+                updateStartDate,
+                updateEndDate);
+        if(updateClosedStatus && newClosedStatus) // close inventories
+            closeInventory(roomId, updateStartDate, updateEndDate, newSurgeFactor, updateSurgeFactor);
+        else
+             inventoryRepository.updateInventory(
+                     roomId,
+                     updateStartDate,
+                     updateEndDate,
+                     newClosedStatus,
+                     newSurgeFactor,
+                     updateClosedStatus,
+                     updateSurgeFactor
+             );
+
+    }
+
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    private void closeInventory(Long roomId, LocalDate startDate, LocalDate endDate, BigDecimal newSurgeFactor, boolean updateSurgeFactor) {
+        // assuming the inventory is already locked by updateInventory method
+        // WE CAN SAFELY ASSUME this method will only be called by updateInventory()
+//        inventoryRepository.lockInventoryBeforeUpdate(roomId, startDate, endDate); // not needed
         List<Booking> reservedBookings = bookingRepository
                 .findAllIntersectingWithDateRangeAndStatusIn(
                         roomId,
@@ -98,6 +162,7 @@ public class InventoryServiceImpl implements InventoryService {
                         endDate,
                         List.of(BookingStatus.CONFIRMED)
                 );
+        List<Booking> affectedBookings = new ArrayList<>();
         // for all those bookings, we now decrement all inventories associated with those bookings
         // ( inventories that lie between the checkin and checkout date of this booking ) and decrement their reserved count
         for (Booking booking : reservedBookings) {
@@ -123,11 +188,18 @@ public class InventoryServiceImpl implements InventoryService {
 
         // for each booking we cancel that booking using BookingService's cancel method ( which also internally calls stripe's refund mechanism )
         for (Booking booking : confirmedBookings) {
-            bookingService.cancelBooking(booking.getId(), false);  // false = cancelled by HM
-            affectedBookings.add(booking);
+            bookingService.cancelBooking(booking.getId(), false);  // false = canceled by HM
+//            affectedBookings.add(booking); // no need of this
         }
 
-        inventoryRepository.updateInventory(roomId, startDate, endDate, true, BigDecimal.ONE); // default);
+        inventoryRepository.updateInventory(roomId,
+                startDate,
+                endDate,
+                true,
+                newSurgeFactor,
+                true,
+                updateSurgeFactor
+                );
         bookingRepository.saveAll(affectedBookings);
 
 //        // TODO :  Notify affected customers
@@ -135,8 +207,9 @@ public class InventoryServiceImpl implements InventoryService {
 //            notifyCustomersOfCancellation(affectedBookings, reason);
 //        }
 
-        log.info("Closed inventory for room {} from {} to {}. Affected {} bookings",
-                roomId, startDate, endDate, affectedBookings.size());
+        int totalAffected = reservedBookings.size() + confirmedBookings.size();
+        log.info("Closed inventory for room {} from {} to {}. Affected {} bookings ({} reserved, {} confirmed)",
+                roomId, startDate, endDate, totalAffected, reservedBookings.size(), confirmedBookings.size());
     }
 
     // =====================================================================================================================

@@ -1,13 +1,18 @@
 package com.nikhil.airbnb.service.serviceImplementations;
 
+import com.nikhil.airbnb.dto.ProfileUpdateRequestDto;
+import com.nikhil.airbnb.dto.UserDto;
 import com.nikhil.airbnb.entity.AppUser;
 import com.nikhil.airbnb.exception.ResourceNotFoundException;
+import com.nikhil.airbnb.exception.UnauthorizedException;
 import com.nikhil.airbnb.repository.AppUserRepository;
 import com.nikhil.airbnb.service.serviceInterfaces.AppUserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,6 +25,7 @@ import org.springframework.stereotype.Service;
 public class AppUserServiceImpl implements AppUserService, UserDetailsService {
     // =====================================================================================================================
     AppUserRepository appUserRepository;
+    ModelMapper modelMapper;
     // =====================================================================================================================
 
     @Override
@@ -31,6 +37,33 @@ public class AppUserServiceImpl implements AppUserService, UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return appUserRepository.findByEmail(email).orElse(null);
+    }
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    @Override
+    public AppUser getCurrentUserFromSecurityContext(){
+        if(SecurityContextHolder.getContext().getAuthentication() == null ||
+                SecurityContextHolder.getContext().getAuthentication().getPrincipal() == null)
+            throw new UnauthorizedException("You are not logged in ! There is not current user !");
+        return (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    @Override
+    public void updateProfile(ProfileUpdateRequestDto profileUpdateRequestDto) {
+        AppUser currentUser = getCurrentUserFromSecurityContext();
+        if(profileUpdateRequestDto.getName()!=null)
+            currentUser.setName(profileUpdateRequestDto.getName());
+        if(profileUpdateRequestDto.getGender()!=null)
+            currentUser.setGender(profileUpdateRequestDto.getGender());
+        if(profileUpdateRequestDto.getDateOfBirth()!=null)
+            currentUser.setDateOfBirth(profileUpdateRequestDto.getDateOfBirth());
+        appUserRepository.save(currentUser);
+    }
+
+    @Override
+    public UserDto getMyProfile() {
+        log.info("Fetching profile of logged in user ...");
+        AppUser currentUser = getCurrentUserFromSecurityContext();
+        return modelMapper.map(currentUser, UserDto.class);
     }
 
     // =====================================================================================================================

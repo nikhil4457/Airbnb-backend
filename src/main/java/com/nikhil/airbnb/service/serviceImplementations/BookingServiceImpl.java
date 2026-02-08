@@ -2,11 +2,13 @@ package com.nikhil.airbnb.service.serviceImplementations;
 
 import com.nikhil.airbnb.dto.BookingDto;
 import com.nikhil.airbnb.dto.BookingRequest;
+import com.nikhil.airbnb.dto.HotelReportDto;
 import com.nikhil.airbnb.entity.*;
 import com.nikhil.airbnb.entity.enums.BookingStatus;
 import com.nikhil.airbnb.exception.ResourceNotFoundException;
 import com.nikhil.airbnb.exception.UnauthorizedException;
 import com.nikhil.airbnb.repository.*;
+import com.nikhil.airbnb.service.serviceInterfaces.AppUserService;
 import com.nikhil.airbnb.service.serviceInterfaces.BookingService;
 import com.nikhil.airbnb.service.serviceInterfaces.CheckoutService;
 import com.nikhil.airbnb.strategy.PricingService;
@@ -23,18 +25,18 @@ import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +50,7 @@ public class BookingServiceImpl implements BookingService {
     InventoryRepository inventoryRepository;
     CheckoutService checkoutService;
     GuestRepository guestRepository;
+    AppUserService appUserService;
     PricingService pricingService;
     ModelMapper modelMapper;
 
@@ -83,7 +86,7 @@ public class BookingServiceImpl implements BookingService {
                 .room(room)
                 .checkInDate(bookingRequest.getCheckInDate())
                 .checkOutDate(bookingRequest.getCheckOutDate())
-                .user(getCurrentUser())
+                .user(appUserService.getCurrentUserFromSecurityContext())
                 .roomsCount(bookingRequest.getRoomsCount())
                 .amount(totalPrice)
                 .bookingStatus(BookingStatus.RESERVED)
@@ -104,7 +107,7 @@ public class BookingServiceImpl implements BookingService {
         }
         if(hasBookingExpired(booking))
             throw new IllegalStateException("Booking has expired");
-        AppUser user = getCurrentUser();
+        AppUser user = appUserService.getCurrentUserFromSecurityContext();
         if(!user.equals(booking.getUser()))
             throw new UnauthorizedException("Booking does not belong to user with id: " + user.getId());
         for (Long guestId: guestIdSet) {
@@ -126,7 +129,7 @@ public class BookingServiceImpl implements BookingService {
         validateStatusTransition(booking.getBookingStatus(), BookingStatus.PAYMENT_PENDING);
         if(hasBookingExpired(booking))
             throw new IllegalStateException("Booking has expired");
-        AppUser user = getCurrentUser();
+        AppUser user = appUserService.getCurrentUserFromSecurityContext();
         if(!user.equals(booking.getUser()))
             throw new UnauthorizedException("Booking does not belong to user with id: " + user.getId());
         booking.setBookingStatus(BookingStatus.PAYMENT_PENDING);
@@ -175,7 +178,7 @@ public class BookingServiceImpl implements BookingService {
 
         // Authorization check ONLY if cancelled by user
         if (isCancelledByUser) {
-            AppUser user = getCurrentUser();
+            AppUser user = appUserService.getCurrentUserFromSecurityContext();
             if (!user.equals(booking.getUser())) {
                 throw new UnauthorizedException("Booking does not belong to this user with id: " + user.getId());
             }
@@ -213,7 +216,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(
                 () -> new ResourceNotFoundException("Booking not found with id: "+bookingId)
         );
-        AppUser appUser = getCurrentUser();
+        AppUser appUser = appUserService.getCurrentUserFromSecurityContext();
         if (!appUser.equals(booking.getUser())) {
             throw new UnauthorizedException("Booking does not belong to this user with id: " + appUser.getId());
         }
@@ -224,16 +227,17 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingDto> getAllBookingsByHotelId(Long hotelId) {
         Hotel hotel = hotelRepository.findById(hotelId).orElseThrow(() -> new ResourceNotFoundException("Hotel not " +
                 "found with ID: "+hotelId));
-        AppUser appUser = getCurrentUser();
+        AppUser appUser = appUserService.getCurrentUserFromSecurityContext();
+        if(!appUser.equals(hotel.getOwner()))
+            throw new AccessDeniedException("You are not the owner of hotel with id: "+hotelId);
         log.info("Getting all booking for the hotel with ID: {}", hotelId);
-        if(!appUser.equals(hotel.getOwner())) throw new AccessDeniedException("You are not the owner of hotel with id: "+hotelId);
         List<Booking> bookings = bookingRepository.findByHotel(hotel);
         return bookings.stream()
                 .map((element) -> modelMapper.map(element, BookingDto.class))
-                .collect(Collectors.toList());
+                .toList();
     }
 
-//    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 300000)
     @Transactional
     @Override
     public void cleanupExpiredBookings() {
@@ -259,6 +263,40 @@ public class BookingServiceImpl implements BookingService {
                 log.error("Unexpected error cleaning up booking {}", booking.getId(), e);
             }
         }
+    }
+
+    @Override
+    public HotelReportDto getHotelReport(Long hotelId, LocalDate startDate, LocalDate endDate) {
+        Hotel hotel = hotelRepository.findById(hotelId).orElseThrow(() -> new ResourceNotFoundException("Hotel not " +
+                "found with ID: "+hotelId));
+        AppUser appUser = appUserService.getCurrentUserFromSecurityContext();
+        if(!appUser.equals(hotel.getOwner()))
+            throw new AccessDeniedException("You are not the owner of hotel with id: "+hotelId);
+        log.info("Generating report for hotel with id: {}", hotelId);
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
+        List<Booking> bookings = bookingRepository.findByHotelAndCreatedAtBetween(hotel, startDateTime, endDateTime);
+        long totalConfirmedBookings = 0L;
+        BigDecimal totalRevenueOfConfirmedBookings = BigDecimal.ZERO;
+        for(Booking booking: bookings){
+            if(booking.getBookingStatus() != BookingStatus.CONFIRMED) continue;
+            totalConfirmedBookings++;
+            totalRevenueOfConfirmedBookings = totalRevenueOfConfirmedBookings.add(booking.getAmount());
+        }
+        BigDecimal avgRevenue = totalConfirmedBookings == 0
+                ? BigDecimal.ZERO :
+                totalRevenueOfConfirmedBookings.divide(BigDecimal.valueOf(totalConfirmedBookings), RoundingMode.HALF_UP);
+        return new HotelReportDto(totalConfirmedBookings, totalRevenueOfConfirmedBookings, avgRevenue);
+
+    }
+
+    @Override
+    public List<BookingDto> getMyBookings() {
+        AppUser currentUser = appUserService.getCurrentUserFromSecurityContext();
+        return bookingRepository.getByUser(currentUser)
+                .stream()
+                .map(booking -> modelMapper.map(booking, BookingDto.class))
+                .toList();
     }
 
 
@@ -375,13 +413,6 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return BigDecimal.ZERO;
-    }
-    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
-    private AppUser getCurrentUser() {
-        return (AppUser) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
     }
     //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     private void validateStatusTransition(BookingStatus from, BookingStatus to) {

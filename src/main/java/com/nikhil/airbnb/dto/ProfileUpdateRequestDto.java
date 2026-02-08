@@ -14,10 +14,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ToString
-public class UserDto {
-    Long id;
+public class ProfileUpdateRequestDto {
     String name;
-    String email;
-    Gender gender;
     LocalDate dateOfBirth;
+    Gender gender;
 }

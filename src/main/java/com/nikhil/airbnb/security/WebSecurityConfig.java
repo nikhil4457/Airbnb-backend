@@ -38,6 +38,7 @@ public class WebSecurityConfig {
                  .authorizeHttpRequests(authorize -> authorize
                          .requestMatchers("/admin/**").hasRole("HOTEL_MANAGER")
                          .requestMatchers("/bookings/**").authenticated()
+                         .requestMatchers("/users/**").authenticated()
                          .anyRequest().permitAll()
                  )
                  .exceptionHandling(configurer -> configurer.accessDeniedHandler(accessDeniedHandler()));

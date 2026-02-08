@@ -143,14 +143,14 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     List<Inventory> findByHotelAndDateBetween(Hotel hotel, LocalDate startDate, LocalDate endDate);
 
     @Query("""
-                SELECT i
+                SELECT i.id
                 FROM Inventory i
                 WHERE i.room.id = :roomId
                   AND i.date >= :startDate
                   AND i.date <= :endDate
             """)
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    List<Inventory> getInventoryAndLockBeforeUpdate(
+    List<Long> lockInventoryBeforeUpdate(
             @Param("roomId") Long roomId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
@@ -159,8 +159,14 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     @Modifying
     @Query("""
                 UPDATE Inventory i
-                SET i.surgeFactor = :surgeFactor,
-                    i.closed = :closed
+                SET i.surgeFactor = CASE
+                                        WHEN :updateSurgeFactor = true THEN :newSurgeFactor
+                                        ELSE i.surgeFactor
+                                    END,
+               i.closed = CASE
+                              WHEN :updateClosedStatus = true THEN :newClosedStatus
+                              ELSE i.closed
+                           END
                 WHERE i.room.id = :roomId
                   AND i.date >= :startDate
                   AND i.date <= :endDate
@@ -169,9 +175,15 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
             @Param("roomId") Long roomId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
-            @Param("closed") boolean closed,
-            @Param("surgeFactor") BigDecimal surgeFactor
-    );
+            @Param("newClosedStatus") Boolean newClosedStatus,
+            @Param("newSurgeFactor") BigDecimal newSurgeFactor,
+            @Param("updateClosedStatus") boolean updateClosedStatus,
+            @Param("updateSurgeFactor") boolean updateSurgeFactor
+            );
+
+
+
+    List<Inventory> findByRoomOrderByDate(Room room);
 
 //    // ==================== UTILITY METHODS ====================
 //

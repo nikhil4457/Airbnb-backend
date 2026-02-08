@@ -45,6 +45,14 @@ public class RoomsAdminController {
         roomService.deleteRoomById(roomId);
         return ResponseEntity.noContent().build();
     }
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    // TODO: IF WE UPDATE THE PRICE, THEN WE ALSO NEED TO UPDATE THE RESPECTIVE INVENTORY PRICES
+    @PutMapping("/{roomId}")
+    public ResponseEntity<RoomDto> updateRoomById(@PathVariable Long hotelId,
+                                                  @PathVariable Long roomId,
+                                                  @RequestBody RoomDto roomDto){
+        return ResponseEntity.ok(roomService.updateRoomById(hotelId, roomId, roomDto));
+    }
 
     // =====================================================================================================================
 }
