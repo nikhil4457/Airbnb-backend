@@ -17,6 +17,7 @@ import com.stripe.model.Event;
 import com.stripe.model.Refund;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.RefundCreateParams;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -57,9 +59,6 @@ public class BookingServiceImpl implements BookingService {
     @Value("${frontend.url}")
     @NonFinal String frontendUrl;
     // =====================================================================================================================
-
-
-    // TODO : Update inventory prices after booking is confirmed or updated
 
     @Override
     @Transactional
@@ -113,6 +112,9 @@ public class BookingServiceImpl implements BookingService {
         for (Long guestId: guestIdSet) {
             Guest guest = guestRepository.findById(guestId)
                     .orElseThrow(() -> new ResourceNotFoundException("Guest not found with id: " + guestId));
+            if (!guest.getUser().equals(user)) {
+                throw new UnauthorizedException("Guest " + guestId + " doesn't belong to you");
+            }
             booking.getGuests().add(guest);
         }
         booking.setBookingStatus(BookingStatus.GUESTS_ADDED);
@@ -236,7 +238,7 @@ public class BookingServiceImpl implements BookingService {
                 .map((element) -> modelMapper.map(element, BookingDto.class))
                 .toList();
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Scheduled(fixedRate = 300000)
     @Transactional
     @Override
@@ -264,7 +266,7 @@ public class BookingServiceImpl implements BookingService {
             }
         }
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
     public HotelReportDto getHotelReport(Long hotelId, LocalDate startDate, LocalDate endDate) {
         Hotel hotel = hotelRepository.findById(hotelId).orElseThrow(() -> new ResourceNotFoundException("Hotel not " +
@@ -289,7 +291,7 @@ public class BookingServiceImpl implements BookingService {
         return new HotelReportDto(totalConfirmedBookings, totalRevenueOfConfirmedBookings, avgRevenue);
 
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
     public List<BookingDto> getMyBookings() {
         AppUser currentUser = appUserService.getCurrentUserFromSecurityContext();
@@ -298,7 +300,33 @@ public class BookingServiceImpl implements BookingService {
                 .map(booking -> modelMapper.map(booking, BookingDto.class))
                 .toList();
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    @Override
+    @Transactional
+    public void removeGuests(Long bookingId, Set<Long> guestIdList) {
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new ResourceNotFoundException("booking not found with id: " + bookingId));
+        AppUser currentUser = appUserService.getCurrentUserFromSecurityContext();
+        if(!currentUser.equals(booking.getUser()))
+            throw new UnauthorizedException("You are not authorized to remove a guest from a booking that you have not created");
+        BookingStatus currentStatus = booking.getBookingStatus();
+        if (currentStatus != BookingStatus.RESERVED &&
+                currentStatus != BookingStatus.GUESTS_ADDED) {
+            throw new IllegalStateException("Can only modify guests in RESERVED or GUESTS_ADDED status");
+        }
+        Set<Guest> guestsToBeRemoved = new HashSet<>(guestRepository.findAllById(guestIdList));
+        if (guestsToBeRemoved.size() != guestIdList.size()) {
+            throw new EntityNotFoundException("Some guests were not found");
+        }
+        Set<Guest> bookingGuests = booking.getGuests();
+        for(Guest guestToBeRemoved: guestsToBeRemoved){
+            if (!guestToBeRemoved.getUser().equals(currentUser)) {
+                throw new UnauthorizedException("Guest " + guestToBeRemoved.getId() + " doesn't belong to you");
+            }
+            if(!bookingGuests.contains(guestToBeRemoved))
+                throw new IllegalStateException("Guest with id : " + guestToBeRemoved.getId() + " is not a part of this booking");
+            bookingGuests.remove(guestToBeRemoved);
+        }
+    }
 
     //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
@@ -456,6 +484,6 @@ public class BookingServiceImpl implements BookingService {
             );
         }
     }
-    // =====================================================================================================================
 
+    // =====================================================================================================================
 }

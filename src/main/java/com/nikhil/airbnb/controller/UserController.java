@@ -25,20 +25,21 @@ public class UserController {
     BookingService bookingService;
     // =====================================================================================================================
 
-
     @PatchMapping("/profile")
     public ResponseEntity<Void> updateProfile(@RequestBody ProfileUpdateRequestDto profileUpdateRequestDto){
         appUserService.updateProfile(profileUpdateRequestDto);
         return ResponseEntity.noContent().build();
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @GetMapping("/myBooking")
     public ResponseEntity<List<BookingDto>> getMyBookings(){
         return ResponseEntity.ok(bookingService.getMyBookings());
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @GetMapping("/getMyProfile")
     public ResponseEntity<UserDto> getMyProfile(){
         return ResponseEntity.ok(appUserService.getMyProfile());
     }
+
+    // =====================================================================================================================
 }

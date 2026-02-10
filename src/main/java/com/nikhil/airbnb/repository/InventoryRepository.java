@@ -18,7 +18,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
     void deleteByRoom(Room room);
 
-    // ==================== BOOKING QUERIES (EXCLUDE CHECKOUT DATE) ====================
+    // ==================== BOOKING QUERIES (EXCLUDING CHECKOUT DATE) ====================
 
     @Query("""
             SELECT i
@@ -138,7 +138,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
             @Param("numberOfRooms") Integer numberOfRooms
     );
 
-    // ==================== INVENTORY MANAGEMENT (INCLUDE BOTH DATES) ====================
+    // ==================== INVENTORY MANAGEMENT (INCLUDING BOTH DATES) ====================
 
     List<Inventory> findByHotelAndDateBetween(Hotel hotel, LocalDate startDate, LocalDate endDate);
 
@@ -181,23 +181,5 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
             @Param("updateSurgeFactor") boolean updateSurgeFactor
             );
 
-
-
     List<Inventory> findByRoomOrderByDate(Room room);
-
-//    // ==================== UTILITY METHODS ====================
-//
-//    boolean existsByDateBetweenAndReservedCountIsGreaterThan(
-//            LocalDate startDate,
-//            LocalDate endDate,
-//            int threshold
-//    );
-//
-//    boolean existsByDateBetweenAndBookedCountIsGreaterThan(
-//            LocalDate startDate,
-//            LocalDate endDate,
-//            int threshold
-//    );
-//
-//    List<Inventory> findByRoomOrderByDate(Room room);
 }

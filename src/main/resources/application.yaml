@@ -1,0 +1,64 @@
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SPRING_MAIL_USERNAME}
+    password: ${SPRING_MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+  application:
+    name: ${SPRING_APPLICATION_NAME}
+    email:
+      from: ${SPRING_MAIL_FROM}
+      from-name: ${SPRING_MAIL_FROM_NAME}
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
+
+  jpa:
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+    #show-sql: ${SPRING_JPA_SHOW_SQL}
+    properties:
+      hibernate:
+        #format_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL}
+        jdbc:
+          lob:
+            non_contextual_creation: ${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_LOB_NON_CONTEXTUAL_CREATION}
+          time_zone: ${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE}
+
+server:
+  servlet:
+    context-path: ${SERVER_SERVLET_CONTEXT_PATH}
+
+jwt:
+  secretKey: ${JWT_SECRET_KEY}
+
+frontend:
+  url: ${FRONTEND_URL}
+
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY}
+  webhook:
+    secret-key: ${STRIPE_WEBHOOK_SECRET_KEY}
+
+calendarific:
+  secret-key-1: ${CALENDARIFIC_SECRET_KEY_1}
+  secret-key-2: ${CALENDARIFIC_SECRET_KEY_2}
+  secret-key-3: ${CALENDARIFIC_SECRET_KEY_3}
+  secret-key-4: ${CALENDARIFIC_SECRET_KEY_4}
+  secret-key-5: ${CALENDARIFIC_SECRET_KEY_5}
+  secret-key-6: ${CALENDARIFIC_SECRET_KEY_6}

@@ -14,8 +14,9 @@ import java.time.LocalDate;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class UrgencyPricingStrategy implements PricingStrategy {
+    // =====================================================================================================================
     PricingStrategy wrapped;
-
+    // =====================================================================================================================
 
     @Override
     public BigDecimal calculatePrice(Inventory inventory) {
@@ -27,6 +28,8 @@ public class UrgencyPricingStrategy implements PricingStrategy {
         return price;
 
     }
+
+    // =====================================================================================================================
 }
 
 

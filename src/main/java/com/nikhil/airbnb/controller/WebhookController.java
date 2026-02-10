@@ -19,10 +19,11 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequestMapping("/webhook")
 public class WebhookController {
-
+    // =====================================================================================================================
     BookingService bookingService;
     @Value("${stripe.webhook.secret-key}")
     @NonFinal  private String endpointSecret;
+    // =====================================================================================================================
 
     @PostMapping("/payment")
     public ResponseEntity<Void> capturePayments(@RequestBody String payload, @RequestHeader("Stripe-Signature") String sigHeader) {
@@ -34,4 +35,6 @@ public class WebhookController {
             throw new RuntimeException(e);
         }
     }
+
+    // =====================================================================================================================
 }

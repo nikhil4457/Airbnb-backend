@@ -69,7 +69,7 @@ public class HotelController {
         return ResponseEntity.ok(bookingService.getAllBookingsByHotelId(hotelId));
     }
     //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
-    @GetMapping("/{hotelId}/reports")
+    @GetMapping("/{hotelId}/report")
     public ResponseEntity<HotelReportDto> getHotelReport(@PathVariable Long hotelId,
                                                          @RequestParam(required = false) LocalDate startDate,
                                                          @RequestParam(required = false) LocalDate endDate){
@@ -77,10 +77,6 @@ public class HotelController {
         if(endDate == null) endDate = LocalDate.now();
         return ResponseEntity.ok(bookingService.getHotelReport(hotelId, startDate, endDate));
     }
-    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
-
-
 
     // =====================================================================================================================
-
 }

@@ -10,12 +10,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 public interface HotelMinPriceRepository extends JpaRepository<HotelMinPrice, Long> {
-
-    Optional<HotelMinPrice> findByHotelAndDate(Hotel hotel, LocalDate date);
-
 
     @Query(
             """
@@ -33,5 +31,5 @@ public interface HotelMinPriceRepository extends JpaRepository<HotelMinPrice, Lo
             @Param("endDate") LocalDate endDate,
             Pageable pageable
     );
-
+    List<HotelMinPrice> findByHotelAndDateIn(Hotel hotel, ArrayList<LocalDate> localDates);
 }

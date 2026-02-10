@@ -5,8 +5,6 @@ import com.nikhil.airbnb.dto.BookingRequest;
 import com.nikhil.airbnb.dto.HotelReportDto;
 import com.nikhil.airbnb.entity.enums.BookingStatus;
 import com.stripe.model.Event;
-import jakarta.transaction.Transactional;
-import org.springframework.scheduling.annotation.Scheduled;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,11 +19,8 @@ public interface BookingService {
     void cancelBooking(Long bookingId, boolean isCancelledByUser);
     BookingStatus getBookingStatus(Long bookingId);
     List<BookingDto> getAllBookingsByHotelId(Long hotelId);
-
-    @Scheduled(fixedRate = 300000) // Every 5 minutes
-    @Transactional
-    void cleanupExpiredBookings();
-
     HotelReportDto getHotelReport(Long hotelId, LocalDate startDate, LocalDate endDate);
     List<BookingDto> getMyBookings();
+    void removeGuests(Long bookingId, Set<Long> guestLists);
+    void cleanupExpiredBookings();
 }

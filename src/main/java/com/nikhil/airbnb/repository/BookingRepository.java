@@ -2,6 +2,7 @@ package com.nikhil.airbnb.repository;
 
 import com.nikhil.airbnb.entity.AppUser;
 import com.nikhil.airbnb.entity.Booking;
+import com.nikhil.airbnb.entity.Guest;
 import com.nikhil.airbnb.entity.Hotel;
 import com.nikhil.airbnb.entity.enums.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -35,4 +36,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByHotelAndCreatedAtBetween(Hotel hotel, LocalDateTime startDateTime, LocalDateTime endDateTime);
     List<Booking> getByUser(AppUser currentUser);
+
+    boolean existsByBookingStatusInAndGuestsContaining(
+            List<BookingStatus> statuses,
+            Guest guest
+    );
 }

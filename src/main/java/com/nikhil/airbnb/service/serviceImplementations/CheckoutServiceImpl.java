@@ -24,8 +24,9 @@ import java.math.BigDecimal;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class CheckoutServiceImpl implements CheckoutService {
+    // =====================================================================================================================
     BookingRepository bookingRepository;
-
+    // =====================================================================================================================
 
     @Override
     @Transactional
@@ -82,4 +83,6 @@ public class CheckoutServiceImpl implements CheckoutService {
             throw new RuntimeException(e);
         }
     }
+
+    // =====================================================================================================================
 }

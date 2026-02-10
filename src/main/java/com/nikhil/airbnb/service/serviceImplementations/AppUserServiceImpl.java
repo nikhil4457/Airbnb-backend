@@ -46,7 +46,7 @@ public class AppUserServiceImpl implements AppUserService, UserDetailsService {
             throw new UnauthorizedException("You are not logged in ! There is not current user !");
         return (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
     public void updateProfile(ProfileUpdateRequestDto profileUpdateRequestDto) {
         AppUser currentUser = getCurrentUserFromSecurityContext();
@@ -58,7 +58,7 @@ public class AppUserServiceImpl implements AppUserService, UserDetailsService {
             currentUser.setDateOfBirth(profileUpdateRequestDto.getDateOfBirth());
         appUserRepository.save(currentUser);
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
     public UserDto getMyProfile() {
         log.info("Fetching profile of logged in user ...");

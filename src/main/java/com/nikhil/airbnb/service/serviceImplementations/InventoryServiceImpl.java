@@ -46,6 +46,7 @@ public class InventoryServiceImpl implements InventoryService {
     BookingService bookingService;
     RoomRepository roomRepository;
     AppUserService appUserService;
+    EmailService emailService;
     ModelMapper modelMapper;
     // =====================================================================================================================
 
@@ -82,7 +83,8 @@ public class InventoryServiceImpl implements InventoryService {
     //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
     public Page<HotelPriceDto> searchHotels(HotelSearchRequest request) {
-        log.info("Searching hotels for city: {}, start date: {}, end date: {}, rooms count: {}, page: {}, size: {}", request.getCity(), request.getStartDate(), request.getEndDate(), request.getRoomsCount(), request.getPage(), request.getSize());
+        log.info("Searching hotels for city: {}, start date: {}, end date: {}, rooms count: {}, page: {}, size: {}",
+                request.getCity(), request.getStartDate(), request.getEndDate(), request.getRoomsCount(), request.getPage(), request.getSize());
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
         return hotelMinPriceRepository.findHotelsWithAvailableInventory(
                 request.getCity(),
@@ -91,7 +93,7 @@ public class InventoryServiceImpl implements InventoryService {
                 pageable
         );
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
     public List<InventoryDto> getAllInventoryByRoom(Long roomId) {
         log.info("Getting all inventories for room with id: {}", roomId);
@@ -105,7 +107,7 @@ public class InventoryServiceImpl implements InventoryService {
                 .map(inventory -> modelMapper.map(inventory, InventoryDto.class))
                 .toList();
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
     @Transactional
     public void updateInventory(Long roomId, UpdateInventoryRequestDto updateInventoryRequestDto) {
@@ -143,7 +145,8 @@ public class InventoryServiceImpl implements InventoryService {
 
     }
 
-    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    /*-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    -x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-*/
     private void closeInventory(Long roomId, LocalDate startDate, LocalDate endDate, BigDecimal newSurgeFactor, boolean updateSurgeFactor) {
         // assuming the inventory is already locked by updateInventory method
         // WE CAN SAFELY ASSUME this method will only be called by updateInventory()
@@ -162,7 +165,8 @@ public class InventoryServiceImpl implements InventoryService {
                         endDate,
                         List.of(BookingStatus.CONFIRMED)
                 );
-        List<Booking> affectedBookings = new ArrayList<>();
+        List<Booking> toSaveBookings = new ArrayList<>();
+        List<Booking> allAffectedBookings = new ArrayList<>();
         // for all those bookings, we now decrement all inventories associated with those bookings
         // ( inventories that lie between the checkin and checkout date of this booking ) and decrement their reserved count
         for (Booking booking : reservedBookings) {
@@ -181,7 +185,8 @@ public class InventoryServiceImpl implements InventoryService {
             // for all these bookings we change their status
             booking.setBookingStatus(BookingStatus.CANCELLED_BY_HOTEL_MANAGER);
             // add these booking to the affected bookings list
-            affectedBookings.add(booking);
+            toSaveBookings.add(booking);
+            allAffectedBookings.add(booking);
             log.info("Cancelled reserved booking {} due to inventory closure", booking.getId());
         }
 
@@ -189,7 +194,7 @@ public class InventoryServiceImpl implements InventoryService {
         // for each booking we cancel that booking using BookingService's cancel method ( which also internally calls stripe's refund mechanism )
         for (Booking booking : confirmedBookings) {
             bookingService.cancelBooking(booking.getId(), false);  // false = canceled by HM
-//            affectedBookings.add(booking); // no need of this
+            allAffectedBookings.add(booking);
         }
 
         inventoryRepository.updateInventory(roomId,
@@ -200,12 +205,11 @@ public class InventoryServiceImpl implements InventoryService {
                 true,
                 updateSurgeFactor
                 );
-        bookingRepository.saveAll(affectedBookings);
+        bookingRepository.saveAll(toSaveBookings);
 
-//        // TODO :  Notify affected customers
-//        if (!affectedBookings.isEmpty()) {
-//            notifyCustomersOfCancellation(affectedBookings, reason);
-//        }
+        for (Booking booking : allAffectedBookings) {
+            emailService.sendBookingCancellationEmail(booking);
+        }
 
         int totalAffected = reservedBookings.size() + confirmedBookings.size();
         log.info("Closed inventory for room {} from {} to {}. Affected {} bookings ({} reserved, {} confirmed)",

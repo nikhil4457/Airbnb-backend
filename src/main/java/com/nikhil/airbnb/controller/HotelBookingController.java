@@ -2,7 +2,7 @@ package com.nikhil.airbnb.controller;
 
 import com.nikhil.airbnb.dto.BookingDto;
 import com.nikhil.airbnb.dto.BookingRequest;
-import com.nikhil.airbnb.dto.GuestDto;
+import com.nikhil.airbnb.entity.enums.BookingStatus;
 import com.nikhil.airbnb.service.serviceInterfaces.BookingService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,13 +35,24 @@ public class HotelBookingController {
         return ResponseEntity.ok(bookingService.addGuests(bookingId, guestIdList));
     }
     //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    @DeleteMapping("/{bookingId}/removeGuests")
+    public ResponseEntity<Void> removeGuests(@PathVariable Long bookingId,
+                                             @RequestBody Set<Long> guestLists){
+        bookingService.removeGuests(bookingId, guestLists);
+        return ResponseEntity.noContent().build();
+    }
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @PostMapping("/{bookingId}/payments")
-    public ResponseEntity<Map<String, String>> initiatePayment(@PathVariable Long bookingId,
-                                                               @RequestBody List<GuestDto> guestDtos){
+    public ResponseEntity<Map<String, String>> initiatePayment(@PathVariable Long bookingId){
         String sessionUrl = bookingService.initiatePayment(bookingId);
         return ResponseEntity.ok(Map.of("sessionUrl", sessionUrl));
     }
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    @GetMapping("/{bookingId}/status")
+    public ResponseEntity<Map<String, String>> getBookingStatus(@PathVariable Long bookingId){
+        BookingStatus bookingStatus = bookingService.getBookingStatus(bookingId);
+        return ResponseEntity.ok(Map.of("bookingStatus", bookingStatus.name()));
+    }
 
     // =====================================================================================================================
-
 }

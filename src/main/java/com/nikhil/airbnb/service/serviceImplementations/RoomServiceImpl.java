@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -31,6 +32,7 @@ public class RoomServiceImpl implements RoomService {
     HotelRepository hotelRepository;
     InventoryService inventoryService;
     AppUserService appUserService;
+    PricingUpdateService pricingUpdateService;
     ModelMapper modelMapper;
     // =====================================================================================================================
 
@@ -93,13 +95,14 @@ public class RoomServiceImpl implements RoomService {
             throw new UnauthorizedException("Hotel does not belong to user with id: " + appUser.getId());
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id : " + roomId));
+        BigDecimal oldPrice = room.getBasePrice();
         modelMapper.map(roomDto, room);
         room.setId(roomId);
-        // TODO : IF PRICE IS UPDATED , THEN ALSO UPDATE THE RESPECTIVE INVENTORIES
+        // not relying on cron job because Hotel manager would want to see the change immediately
+        if(!room.getBasePrice().equals(oldPrice))
+            pricingUpdateService.updateRoomPrice(room);
         return modelMapper.map(roomRepository.save(room), RoomDto.class);
     }
 
-
     // =====================================================================================================================
-
 }
