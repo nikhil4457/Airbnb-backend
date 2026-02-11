@@ -3,6 +3,7 @@ package com.nikhil.airbnb.service.serviceImplementations;
 import com.nikhil.airbnb.dto.ProfileUpdateRequestDto;
 import com.nikhil.airbnb.dto.UserDto;
 import com.nikhil.airbnb.entity.AppUser;
+import com.nikhil.airbnb.entity.enums.Role;
 import com.nikhil.airbnb.exception.ResourceNotFoundException;
 import com.nikhil.airbnb.exception.UnauthorizedException;
 import com.nikhil.airbnb.repository.AppUserRepository;
@@ -64,6 +65,37 @@ public class AppUserServiceImpl implements AppUserService, UserDetailsService {
         log.info("Fetching profile of logged in user ...");
         AppUser currentUser = getCurrentUserFromSecurityContext();
         return modelMapper.map(currentUser, UserDto.class);
+    }
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    @Override
+    public void processHotelMangerRequest() {
+        AppUser user = getCurrentUserFromSecurityContext();
+        if (user.getRoles().contains(Role.HOTEL_MANAGER)) {
+            throw new IllegalStateException("Already a hotel manager");
+        }
+
+        /*-----------------------------------------------------------------------
+         * PRODUCTION VERIFICATION WORKFLOW:
+         *
+         * In a production system, this would include:
+         * 1. Email verification (confirm business email ownership)
+         * 2. Phone OTP verification (SMS/WhatsApp)
+         * 3. Document upload & validation:
+         *    - Government-issued ID (passport/driver's license)
+         *    - Business registration certificate
+         *    - Tax identification number
+         * 4. Background check via third-party API
+         * 5. Manual admin review for high-risk applications
+         * 6. Bank account verification for payout setup
+         *
+         * For this demo, instant approval is enabled to showcase the hotel
+         * management features (room creation, inventory management, booking
+         * reports) without adding verification infrastructure.
+         ----------------------------------------------------------------------*/
+
+        user.getRoles().add(Role.HOTEL_MANAGER);
+        appUserRepository.save(user);
+        log.info("User {} became hotel manager", user.getId());
     }
 
     // =====================================================================================================================

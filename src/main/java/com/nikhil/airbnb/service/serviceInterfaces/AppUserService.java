@@ -9,4 +9,5 @@ public interface AppUserService {
     AppUser getCurrentUserFromSecurityContext();
     void updateProfile(ProfileUpdateRequestDto profileUpdateRequestDto);
     UserDto getMyProfile();
+    void processHotelMangerRequest();
 }

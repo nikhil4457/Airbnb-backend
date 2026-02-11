@@ -40,6 +40,12 @@ public class UserController {
     public ResponseEntity<UserDto> getMyProfile(){
         return ResponseEntity.ok(appUserService.getMyProfile());
     }
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    @PostMapping("/become-hotel-manager")
+    public ResponseEntity<String> becomeHotelManager() {
+        appUserService.processHotelMangerRequest();
+        return ResponseEntity.ok("You are now a hotel manager! You can create hotels.");
+    }
 
     // =====================================================================================================================
 }
