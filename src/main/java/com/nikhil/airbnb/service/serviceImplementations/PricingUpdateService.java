@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -48,6 +50,10 @@ public class PricingUpdateService {
     }
     //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Scheduled(cron = "0 */30 * * * *")
+    @Caching(evict = {
+            @CacheEvict(value = "hotelSearch", allEntries = true),
+            @CacheEvict(value = "inventoryPrice", allEntries = true)
+    })
     public void updatePrice(){
         log.info("Updating inventory prices ... ");
         int page = 0;

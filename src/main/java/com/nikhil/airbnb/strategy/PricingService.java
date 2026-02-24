@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,6 +22,11 @@ public class PricingService {
     AbstractHolidayService holidayService;
     // =====================================================================================================================
 
+    @Cacheable(
+            value = "inventoryPrice",
+            key = "#inventory.id + ':' + #inventory.surgeFactor + ':' + #inventory.bookedCount + ':' + #inventory.reservedCount + ':' + #inventory.totalCount",
+            unless = "#result == null"
+    )
     public BigDecimal calculateDynamicPricing(Inventory inventory){
         log.info("Calculating dynamic price ...");
         PricingStrategy pricingStrategy = new BasePricingStrategy();

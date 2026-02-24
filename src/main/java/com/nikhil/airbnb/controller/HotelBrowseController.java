@@ -1,6 +1,7 @@
 package com.nikhil.airbnb.controller;
 
 
+import com.nikhil.airbnb.dto.CachedPageDto;
 import com.nikhil.airbnb.dto.HotelInfoDto;
 import com.nikhil.airbnb.dto.HotelPriceDto;
 import com.nikhil.airbnb.dto.HotelSearchRequest;
@@ -10,7 +11,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +27,8 @@ public class HotelBrowseController {
     // =====================================================================================================================
 
     @GetMapping("/search")
-    public ResponseEntity<Page<HotelPriceDto>> searchHotels(@RequestBody HotelSearchRequest request){
-        Page<HotelPriceDto> page = inventoryService.searchHotels(request);
+    public ResponseEntity<CachedPageDto<HotelPriceDto>> searchHotels(@RequestBody HotelSearchRequest request){
+        CachedPageDto<HotelPriceDto> page = inventoryService.searchHotels(request);
         return ResponseEntity.ok(page);
     }
     //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-

@@ -1,12 +1,10 @@
 package com.nikhil.airbnb.service.serviceInterfaces;
 
-import com.nikhil.airbnb.entity.Holiday;
-import com.nikhil.airbnb.entity.HolidayId;
 import com.nikhil.airbnb.entity.enums.CountryCode;
-import com.nikhil.airbnb.repository.HolidayRepository;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -16,43 +14,21 @@ import java.time.LocalDate;
 @Slf4j
 public abstract class AbstractHolidayService {
     // =====================================================================================================================
-    protected final HolidayRepository holidayRepository;
     // =====================================================================================================================
 
-    protected AbstractHolidayService(HolidayRepository holidayRepository) {
-        this.holidayRepository = holidayRepository;
-    }
-    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    @Cacheable(
+            value = "holidays",
+            key = "#countryCode + ':' + #date",
+            unless = "#result == false"
+    )
     public boolean isHoliday(LocalDate date, CountryCode countryCode) {
         if (isWeekend(date))
             return true;
 
-        HolidayId id = new HolidayId(date, countryCode);
-        if (holidayRepository.existsById(id)) {
-            log.info("Found in Holiday repository");
-            return true;
-        }
-
+        log.info("Cache MISS - Calling API: {} - {}", countryCode, date);
         boolean isHoliday = isHolidayInternal(date, countryCode);
         if (isHoliday) {
-            log.info("Attempting to save holiday: {}", id);
-
-            try {
-                Holiday saved = holidayRepository.save(new Holiday(id));
-                log.info("Save returned: {}", saved);
-
-                // Force flush to DB
-                holidayRepository.flush();
-                log.info("Flushed to DB");
-
-                // Verify it's there
-                boolean exists = holidayRepository.existsById(id);
-                log.info("Exists after save: {}", exists);
-
-            } catch (Exception e) {
-                log.error("Save failed!", e);
-                throw e;
-            }
+            log.info("Holiday found via API: {} - {}", countryCode, date);
         }
         return isHoliday;
     }

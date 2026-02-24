@@ -1,9 +1,6 @@
 package com.nikhil.airbnb.service.serviceImplementations;
 
-import com.nikhil.airbnb.dto.HotelPriceDto;
-import com.nikhil.airbnb.dto.HotelSearchRequest;
-import com.nikhil.airbnb.dto.InventoryDto;
-import com.nikhil.airbnb.dto.UpdateInventoryRequestDto;
+import com.nikhil.airbnb.dto.*;
 import com.nikhil.airbnb.entity.AppUser;
 import com.nikhil.airbnb.entity.Booking;
 import com.nikhil.airbnb.entity.Inventory;
@@ -24,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -82,16 +80,20 @@ public class InventoryServiceImpl implements InventoryService {
     }
     //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
-    public Page<HotelPriceDto> searchHotels(HotelSearchRequest request) {
-        log.info("Searching hotels for city: {}, start date: {}, end date: {}, rooms count: {}, page: {}, size: {}",
-                request.getCity(), request.getStartDate(), request.getEndDate(), request.getRoomsCount(), request.getPage(), request.getSize());
+    @Cacheable(
+            value = "hotelSearch",
+            key = "#request.toString()",
+            unless = "#result == null || #result.isEmpty()"
+    )
+    public CachedPageDto<HotelPriceDto> searchHotels(HotelSearchRequest request) {
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
-        return hotelMinPriceRepository.findHotelsWithAvailableInventory(
+        Page<HotelPriceDto> result = hotelMinPriceRepository.findHotelsWithAvailableInventory(
                 request.getCity(),
                 request.getStartDate(),
                 request.getEndDate(),
                 pageable
         );
+        return CachedPageDto.from(result);
     }
     //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
@@ -118,7 +120,7 @@ public class InventoryServiceImpl implements InventoryService {
         boolean updateClosedStatus = newClosedStatus != null;
         boolean updateSurgeFactor = newSurgeFactor != null;
         if(!updateClosedStatus && !updateSurgeFactor){
-            throw new IllegalArgumentException("SurgeFactor and closed cannot be null simultaneously in a update request");
+            throw new IllegalArgumentException("SurgeFactor and closed cannot be null simultaneously in an update request");
         }
         LocalDate updateStartDate = updateInventoryRequestDto.getStartDate();
         LocalDate updateEndDate = updateInventoryRequestDto.getEndDate();
@@ -127,9 +129,11 @@ public class InventoryServiceImpl implements InventoryService {
         AppUser appUser = appUserService.getCurrentUserFromSecurityContext();
         if(!appUser.equals(room.getHotel().getOwner()))
             throw new UnauthorizedException("You are not the owner of room with id : " + roomId);
-        inventoryRepository.lockInventoryBeforeUpdate(roomId,
+        inventoryRepository.lockInventoryBeforeUpdate(
+                roomId,
                 updateStartDate,
-                updateEndDate);
+                updateEndDate
+        );
         if(updateClosedStatus && newClosedStatus) // close inventories
             closeInventory(roomId, updateStartDate, updateEndDate, newSurgeFactor, updateSurgeFactor);
         else
@@ -147,7 +151,8 @@ public class InventoryServiceImpl implements InventoryService {
 
     /*-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     -x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-*/
-    private void closeInventory(Long roomId, LocalDate startDate, LocalDate endDate, BigDecimal newSurgeFactor, boolean updateSurgeFactor) {
+    private void closeInventory(Long roomId, LocalDate startDate, LocalDate endDate,
+                                BigDecimal newSurgeFactor, boolean updateSurgeFactor) {
         // assuming the inventory is already locked by updateInventory method
         // WE CAN SAFELY ASSUME this method will only be called by updateInventory()
 //        inventoryRepository.lockInventoryBeforeUpdate(roomId, startDate, endDate); // not needed

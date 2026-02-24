@@ -2,9 +2,9 @@ package com.nikhil.airbnb.service.serviceImplementations;
 
 import com.nikhil.airbnb.dto.CalendarificResponse;
 import com.nikhil.airbnb.entity.enums.CountryCode;
-import com.nikhil.airbnb.repository.HolidayRepository;
 import com.nikhil.airbnb.service.serviceInterfaces.AbstractHolidayService;
 import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,12 +15,12 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
 public class CalendarificHolidayServiceImpl extends AbstractHolidayService {
-
+    // =====================================================================================================================
     final RestClient calendarificRestClient;
-
     @Value("${calendarific.secret-key-1}")
     String apiKey1;
     @Value("${calendarific.secret-key-2}")
@@ -33,16 +33,7 @@ public class CalendarificHolidayServiceImpl extends AbstractHolidayService {
     String apiKey5;
     @Value("${calendarific.secret-key-6}")
     String apiKey6;
-
-
-    public CalendarificHolidayServiceImpl(
-            HolidayRepository holidayRepository,
-            RestClient calendarificRestClient
-    ) {
-        super(holidayRepository);
-        this.calendarificRestClient = calendarificRestClient;
-    }
-
+    // =====================================================================================================================
 
     @Override
     protected boolean isHolidayInternal(
@@ -56,12 +47,12 @@ public class CalendarificHolidayServiceImpl extends AbstractHolidayService {
         }
         return false;
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     @Override
     protected String appCountryCodeToApiCountryCode(CountryCode countryCode) {
         return countryCode.name();
     }
-
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
     private boolean isHolidayWithKey(
             LocalDate date,
             String countryCode,
@@ -88,7 +79,10 @@ public class CalendarificHolidayServiceImpl extends AbstractHolidayService {
                         && !response.getResponse().getHolidays().isEmpty();
             }
             catch(Exception e){
+                log.warn(e.getLocalizedMessage());
                 return false;
             }
     }
+
+    // =====================================================================================================================
 }

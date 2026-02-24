@@ -73,8 +73,10 @@ public class BookingServiceImpl implements BookingService {
         List<Inventory> inventoryList = inventoryRepository.findAndLockAvailableInventory(room.getId(),
                 bookingRequest.getCheckInDate(), bookingRequest.getCheckOutDate(), bookingRequest.getRoomsCount());
         validateCountOfRows(bookingRequest.getCheckInDate(), bookingRequest.getCheckOutDate(), inventoryList.size());
+
         BigDecimal priceForOneRoom = pricingService.calculateTotalPrice(inventoryList);
         BigDecimal totalPrice = priceForOneRoom.multiply(BigDecimal.valueOf(bookingRequest.getRoomsCount()));
+
         // Reserve the room/ update the booked count of inventories
         int modifiedRowsCount = inventoryRepository.initBooking(room.getId(), bookingRequest.getCheckInDate(),
                 bookingRequest.getCheckOutDate(), bookingRequest.getRoomsCount());
