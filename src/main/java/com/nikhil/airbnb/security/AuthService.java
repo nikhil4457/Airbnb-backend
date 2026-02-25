@@ -39,7 +39,7 @@ public class AuthService {
             throw new IllegalArgumentException("Email already exists");
         }
         AppUser appUser = modelMapper.map(signupRequestDto, AppUser.class);
-        appUser.setRoles(Set.of(Role.HOTEL_MANAGER));
+        appUser.setRoles(Set.of(Role.GUEST));
         appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
         AppUser savedUser = appUserRepository.save(appUser);
         return modelMapper.map(savedUser, UserDto.class);

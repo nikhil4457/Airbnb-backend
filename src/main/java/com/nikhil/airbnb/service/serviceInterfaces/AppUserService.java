@@ -7,7 +7,9 @@ import com.nikhil.airbnb.entity.AppUser;
 public interface AppUserService {
     AppUser getUserById(Long userId);
     AppUser getCurrentUserFromSecurityContext();
-    void updateProfile(ProfileUpdateRequestDto profileUpdateRequestDto);
+    AppUser getUserByEmail(String email);
+    AppUser saveUser(AppUser appUser);
     UserDto getMyProfile();
+    void updateProfile(ProfileUpdateRequestDto profileUpdateRequestDto);
     void processHotelMangerRequest();
 }

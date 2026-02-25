@@ -1,5 +1,6 @@
 package com.nikhil.airbnb.security;
 
+import com.nikhil.airbnb.handler.OAuth2SuccessHandler;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -26,6 +27,7 @@ public class WebSecurityConfig {
     // =====================================================================================================================
      JWTAuthFilter jwtAuthFilter;
      HandlerExceptionResolver handlerExceptionResolver;
+     OAuth2SuccessHandler oAuth2SuccessHandler;
      // =====================================================================================================================
 
      @Bean
@@ -40,6 +42,10 @@ public class WebSecurityConfig {
                          .requestMatchers("/bookings/**").authenticated()
                          .requestMatchers("/users/**").authenticated()
                          .anyRequest().permitAll()
+                 )
+                 .oauth2Login(oauth2config -> oauth2config
+                                 .failureUrl("/login?error=true")
+                                 .successHandler(oAuth2SuccessHandler)
                  )
                  .exceptionHandling(configurer -> configurer.accessDeniedHandler(accessDeniedHandler()));
 

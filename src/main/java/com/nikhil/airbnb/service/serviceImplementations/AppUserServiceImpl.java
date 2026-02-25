@@ -97,6 +97,16 @@ public class AppUserServiceImpl implements AppUserService, UserDetailsService {
         appUserRepository.save(user);
         log.info("User {} became hotel manager", user.getId());
     }
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    @Override
+    public AppUser getUserByEmail(String email) {
+        return appUserRepository.findByEmail(email).orElse(null);
+    }
+    //-x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x--x-x-x-x-x-x-x-x-x-x-x-x-x-
+    @Override
+    public AppUser saveUser(AppUser appUser) {
+        return appUserRepository.save(appUser);
+    }
 
     // =====================================================================================================================
 }
