@@ -84,6 +84,7 @@ Unlike a distributed system, this project is a single monolithic application: on
 ```
 
 The application follows a classic layered monolith design: controllers accept HTTP requests, delegate to a service layer that contains all business logic, and the service layer talks to JPA repositories (PostgreSQL) and external APIs (Stripe, Calendarific). Scheduled jobs run in-process alongside the web server to handle pricing recalculation and expired-booking cleanup.
+Detailed Class Diagram : [Diagram Link](https://excalidraw.com/#json=sZkyOztN8DEnqBMyWVqfL,93kBqEpSKzNzWEvsfLu-qw)
 
 [Back to top](#table-of-contents)
 
